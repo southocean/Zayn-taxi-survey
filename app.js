@@ -3,7 +3,13 @@
 
 const $  = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const KEY = 'fieldkit.v2';
+const KEY = 'fieldkit.v3';
+
+/* From the briefing email. Call first; never argue with a driver. */
+const CONTACTS = {
+  coName: 'Robin Ray',  coTel: '073 536 6082',
+  bkName: 'Denis',      bkTel: 'denis@rekmatch.se'
+};
 
 /* Survey links are public "anyone with the link" forms. Personal
    phone numbers deliberately are NOT in here — they go in Setup. */
@@ -13,14 +19,16 @@ const FORMS = {
 };
 
 const blank = () => ({
-  route: 'south',
-  lang: 'en',
+  route: 'central',             // cheapest way to buy 15 minutes
+  tab:   'run',
+  lang:  'en',
   theme: null,                  // null = follow the system
+  cordon: true,
   legs:  {},                    // "route:n" -> {done, fare, notes}
   leads: [],
   notes: {},                    // note id -> bool
   dos:   {}, donts: {},
-  cfg:   { coName:'', coTel:'', bkName:'', bkTel:'', name:'Nam' },
+  cfg:   { ...CONTACTS, name:'Nam' },
   order: { cab:null, close:null }
 });
 
@@ -101,6 +109,24 @@ function renderSos(){
 }
 
 /* ================= ROUTE PICKER ================= */
+/* Ray casting against the cordon ring. */
+function inCordon(p){
+  let c = false;
+  for (let i = 0, j = CORDON.length - 1; i < CORDON.length; j = i++){
+    const [yi, xi] = CORDON[i], [yj, xj] = CORDON[j];
+    if (((yi > p.lat) !== (yj > p.lat)) && (p.lng < (xj - xi) * (p.lat - yi) / (yj - yi) + xi)) c = !c;
+  }
+  return c;
+}
+/* Every stop on one side of the line means no leg is ever charged. */
+function cordonStatus(r){
+  const stops = [...new Map(r.legs.flatMap(L => [[L.from.name, L.from], [L.to.name, L.to]])).values()];
+  const ins = stops.filter(inCordon).length;
+  if (ins === 0)            return { ok:true,  side:'outside', txt:`All ${stops.length} stops sit <b>outside</b> the congestion cordon — no leg ever crosses it, so you pay no charge.` };
+  if (ins === stops.length) return { ok:true,  side:'inside',  txt:`All ${stops.length} stops sit <b>inside</b> the cordon. Driving around within the ring is free — you only pay to cross it — so no leg is ever charged.` };
+  return { ok:false, side:'mixed', txt:`<b>Warning:</b> ${ins} of ${stops.length} stops are inside the cordon and the rest outside, so some legs cross it and will cost extra.` };
+}
+
 function renderRoutePick(){
   $('#routePick').innerHTML = ROUTES.map(r => {
     const done = r.legs.filter(L => (S.legs[r.id + ':' + L.n] || {}).done).length;
@@ -109,13 +135,16 @@ function renderRoutePick(){
       <i>${r.kmh} km/h${done ? ` · ${done}/14 done` : ''}</i></button>`;
   }).join('');
 
-  const r = route();
-  $('#routeInfo').innerHTML = `<p>${r.blurb}</p><p class="watch"><b>Watch out.</b> ${r.watch}</p>`;
+  const r = route(), cs = cordonStatus(r);
+  $('#routeInfo').innerHTML =
+    `<p>${r.blurb}</p>
+     <p class="cordon ${cs.ok ? 'ok' : 'bad'}">${cs.ok ? '✓' : '!'} ${cs.txt}</p>
+     <p class="watch"><b>Watch out.</b> ${r.watch}</p>`;
   $('#legHint').textContent = r.area;
 }
 function pickRoute(id){
-  S.route = id; save();
-  renderRoutePick(); renderLegs(); drawRoute(); fitAll(); paintCounters();
+  S.route = id; highlight = null; save();
+  renderRoutePick(); renderLegs(); drawCordon(); drawRoute(); fitAll(); paintCounters();
   toast(route().name + ' route');
 }
 
@@ -186,7 +215,7 @@ function focusLeg(n){
 }
 
 /* ================= MAP ================= */
-let map, meMarker, meCircle, watchId = null, legLayer, tiles, highlight = null;
+let map, meMarker, meCircle, watchId = null, legLayer, cordonLayer, tiles, highlight = null;
 const TILE = d => d
   ? 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
   : 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
@@ -199,8 +228,33 @@ function initMap(){
   map = L.map('map', { zoomControl:false }).setView([59.32, 18.05], 12);
   L.control.zoom({ position:'bottomright' }).addTo(map);
   tiles = L.tileLayer(TILE(isDark()), { attribution:'© OpenStreetMap, © CARTO', maxZoom:19 }).addTo(map);
+  cordonLayer = L.layerGroup().addTo(map);
   legLayer = L.layerGroup().addTo(map);
-  drawRoute(); fitAll();
+  drawCordon(); drawRoute(); fitAll();
+}
+
+/* The congestion-charge ring, so it's obvious at a glance that no leg
+   crosses it. Drawn under the route, never interactive on the fill. */
+function drawCordon(){
+  if (!map) return;
+  cordonLayer.clearLayers();
+  $('#btnCordon').classList.toggle('ghost', !S.cordon);
+  if (!S.cordon) return;
+
+  const cs = cordonStatus(route());
+  L.polygon(CORDON, {
+    color:'#e11d48', weight:2, opacity:.85, dashArray:'7 5',
+    fillColor:'#e11d48', fillOpacity: cs.side === 'inside' ? .07 : .04,
+    interactive:false
+  }).addTo(cordonLayer);
+
+  /* A label anchored on the ring itself, not floating in the middle,
+     so it never sits on top of a leg line. */
+  L.marker([CORDON[0][0], CORDON[0][1]], {
+    interactive:false,
+    icon: L.divIcon({ className:'', iconSize:[128,16], iconAnchor:[64,8],
+      html:`<div class="cordonlbl">congestion cordon</div>` })
+  }).addTo(cordonLayer);
 }
 
 const ptKey  = p => p.lat.toFixed(4) + ',' + p.lng.toFixed(4);
@@ -282,7 +336,10 @@ function drawRoute(){
 function fitAll(){
   if (!map) return;
   const pts = route().legs.flatMap(L2 => [[L2.from.lat, L2.from.lng], [L2.to.lat, L2.to.lng]]);
-  map.fitBounds(L.latLngBounds(pts).pad(0.12));
+  /* Include the ring when it's on — otherwise the central route fills
+     the screen and you can't see that it stays inside. */
+  if (S.cordon) pts.push(...CORDON);
+  map.fitBounds(L.latLngBounds(pts).pad(0.08));
 }
 
 function renderLegend(){
@@ -483,14 +540,29 @@ function wipe(){
   localStorage.removeItem(KEY); S = blank(); renderAll(); toast('Erased');
 }
 
+/* ================= TABS ================= */
+const TABS = ['run','script','notes','q','leads','setup'];
+function showTab(name){
+  S.tab = name; save();
+  $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+  TABS.forEach(t => $('#tab-' + t).hidden = t !== name);
+  window.scrollTo({ top:0 });
+  if (name === 'run'){ initMap(); setTimeout(() => map.invalidateSize(), 60); }
+}
+
 /* ================= BOOT ================= */
 function renderAll(){
   applyTheme(); renderSos(); renderRoutePick(); renderLegs(); renderScripts();
   renderNotes(); renderQ(); renderLeads(); renderSetup(); renderLegend(); paintCounters();
-  if (map) { drawRoute(); fitAll(); }
+  if (map) { drawCordon(); drawRoute(); fitAll(); }
 }
 
 function boot(){
+  $$('.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+  $('#btnCordon').onclick = () => {
+    S.cordon = !S.cordon; save(); initMap(); drawCordon();
+    toast(S.cordon ? 'Cordon shown' : 'Cordon hidden');
+  };
   $('#btnTheme').onclick = () => {
     const sysDark = matchMedia('(prefers-color-scheme: dark)').matches;
     S.theme = S.theme === null ? (sysDark ? 'light' : 'dark') : (S.theme === 'dark' ? 'light' : 'dark');
@@ -513,6 +585,6 @@ function boot(){
   $('#fileImport').onchange = e => e.target.files[0] && importAll(e.target.files[0]);
 
   renderAll();
-  initMap();
+  showTab(TABS.includes(S.tab) ? S.tab : 'run');
 }
 boot();

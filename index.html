@@ -24,46 +24,47 @@
     </div>
   </div>
   <div class="bar"><i id="barFill"></i></div>
-  <nav class="jump">
-    <a href="#s-legs">Legs</a><a href="#s-map">Map</a><a href="#s-script">Script</a>
-    <a href="#s-notes">Notes</a><a href="#s-q">Questions</a><a href="#s-leads">Leads</a><a href="#s-setup">Setup</a>
+  <nav class="tabs">
+    <button data-tab="run" class="on">Route</button>
+    <button data-tab="script">Script</button>
+    <button data-tab="notes">Notes</button>
+    <button data-tab="q">Questions</button>
+    <button data-tab="leads">Leads</button>
+    <button data-tab="setup">Setup</button>
   </nav>
 </header>
 
 <main>
 
-<!-- ===== emergency contact ===== -->
-<section class="sos" id="sosBox"></section>
+<!-- ===================== ROUTE: legs + map ===================== -->
+<section id="tab-run">
+  <div class="sos" id="sosBox"></div>
 
-<!-- ===== route picker ===== -->
-<section id="s-route">
-  <h2 class="h">Route</h2>
   <div class="routepick" id="routePick"></div>
   <div class="card pad routeinfo" id="routeInfo"></div>
-</section>
 
-<!-- ===== legs + map ===== -->
-<section id="s-legs" class="split">
-  <div class="col-legs">
-    <h2 class="h">The 14 legs <span class="sub" id="legHint"></span></h2>
-    <div id="legList"></div>
-    <p class="foot">Times and fares are estimates. <b>The app's own quote is the truth</b> — check it before you confirm, and if the ETA is under 13 minutes, don't take it.</p>
-  </div>
-  <div class="col-map" id="s-map">
-    <h2 class="h">Map</h2>
-    <div class="maptools">
-      <button id="btnLocate" class="btn">Track me</button>
-      <button id="btnFitAll" class="btn ghost">Fit route</button>
+  <div class="split">
+    <div class="col-legs">
+      <h2 class="h">The 14 legs <span class="sub" id="legHint"></span></h2>
+      <div id="legList"></div>
+      <p class="foot">Times and fares are estimates. <b>The app's own quote is the truth</b> — check it before you confirm, and if the ETA is under 13 minutes, don't take it.</p>
     </div>
-    <div id="map"></div>
-    <div id="mapInfo" class="mapinfo"></div>
-    <div class="maplegend" id="mapLegend"></div>
+    <div class="col-map">
+      <h2 class="h">Map</h2>
+      <div class="maptools">
+        <button id="btnLocate" class="btn">Track me</button>
+        <button id="btnFitAll" class="btn ghost">Fit route</button>
+        <button id="btnCordon" class="btn ghost">Cordon</button>
+      </div>
+      <div id="map"></div>
+      <div id="mapInfo" class="mapinfo"></div>
+      <div class="maplegend" id="mapLegend"></div>
+    </div>
   </div>
 </section>
 
-<!-- ===== script ===== -->
-<section id="s-script">
-  <h2 class="h">Script</h2>
+<!-- ===================== SCRIPT ===================== -->
+<section id="tab-script" hidden>
   <div class="scriptctl">
     <div class="seg" id="langSeg">
       <button data-lang="en" class="on">English</button>
@@ -85,44 +86,37 @@
   <button id="btnResetOrder" class="btn ghost wide">Reset card order</button>
 </section>
 
-<!-- ===== notes ===== -->
-<section id="s-notes">
+<!-- ===================== NOTES ===================== -->
+<section id="tab-notes" hidden>
   <h2 class="h">Notes <span class="sub">tick them off as you read</span></h2>
   <div id="noteList"></div>
-
   <div class="dd">
-    <div class="card pad">
-      <h3 class="ddh do">Do</h3>
-      <div id="dosList"></div>
-    </div>
-    <div class="card pad">
-      <h3 class="ddh dont">Don't</h3>
-      <div id="dontsList"></div>
-    </div>
+    <div class="card pad"><h3 class="ddh do">Do</h3><div id="dosList"></div></div>
+    <div class="card pad"><h3 class="ddh dont">Don't</h3><div id="dontsList"></div></div>
   </div>
 </section>
 
-<!-- ===== question guide ===== -->
-<section id="s-q">
+<!-- ===================== QUESTIONS ===================== -->
+<section id="tab-q" hidden>
   <h2 class="h">What each question is really asking</h2>
   <div id="qGuide"></div>
 </section>
 
-<!-- ===== leads ===== -->
-<section id="s-leads">
+<!-- ===================== LEADS ===================== -->
+<section id="tab-leads" hidden>
   <h2 class="h">Leads <span class="sub">a fresh blank one appears as you fill the last</span></h2>
   <div id="leadList"></div>
   <button id="btnCopyLeads" class="btn wide">Copy leads for the email</button>
 </section>
 
-<!-- ===== setup ===== -->
-<section id="s-setup">
-  <h2 class="h">Setup</h2>
+<!-- ===================== SETUP ===================== -->
+<section id="tab-setup" hidden>
   <div class="card pad">
-    <p class="muted small">Stored on this phone only. Nothing here is sent anywhere.</p>
+    <h3>Contacts</h3>
+    <p class="muted small">Reachable from the ✆ in the header on every tab.</p>
     <div class="grid2">
-      <label>Coordinator name<input id="cfgCoName" placeholder="who you call first"></label>
-      <label>Coordinator phone<input id="cfgCoTel" type="tel" inputmode="tel" placeholder="07x xxx xxxx"></label>
+      <label>Coordinator name<input id="cfgCoName"></label>
+      <label>Coordinator phone<input id="cfgCoTel" type="tel" inputmode="tel"></label>
     </div>
     <div class="grid2">
       <label>Backup contact name<input id="cfgBkName" placeholder="accounts / logins"></label>

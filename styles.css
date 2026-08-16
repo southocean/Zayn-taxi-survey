@@ -54,10 +54,11 @@ h1{font-size:16px}
 .iconbtn.call.off{background:var(--card2);border-color:var(--line);color:var(--dim)}
 .bar{height:3px;background:var(--card2);border-radius:99px;margin:8px auto 4px;max-width:1180px;overflow:hidden}
 .bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .3s}
-.jump{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;max-width:1180px;margin:0 auto}
-.jump::-webkit-scrollbar{display:none}
-.jump a{flex:1;min-width:62px;text-align:center;text-decoration:none;color:var(--dim);
-  font:600 12.5px/1 inherit;padding:10px 6px;border-bottom:2px solid transparent}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;max-width:1180px;margin:0 auto}
+.tabs::-webkit-scrollbar{display:none}
+.tabs button{flex:1;min-width:62px;background:none;border:0;border-bottom:2px solid transparent;
+  color:var(--dim);font:600 12.5px/1 inherit;padding:11px 6px;cursor:pointer}
+.tabs button.on{color:var(--acc);border-bottom-color:var(--acc)}
 
 /* ---------- generic ---------- */
 .btn{background:var(--acc);color:var(--on-acc);border:0;border-radius:10px;padding:10px 14px;
@@ -110,6 +111,13 @@ input:focus{outline:2px solid var(--acc);outline-offset:-1px}
 .routeinfo p{margin:0 0 9px;font-size:13.5px;color:var(--mut)}
 .routeinfo p:last-child{margin:0}
 .routeinfo .watch{color:var(--tx);background:var(--card2);border-radius:9px;padding:10px 11px;font-size:13px}
+.routeinfo .cordon{border-radius:9px;padding:10px 11px;font-size:13px}
+.routeinfo .cordon.ok{background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--tx)}
+.routeinfo .cordon.bad{background:var(--warn-soft);color:var(--warn)}
+.routeinfo .cordon b{color:inherit}
+.cordonlbl{font:700 9.5px/1 -apple-system,sans-serif;letter-spacing:.09em;text-transform:uppercase;
+  color:#e11d48;background:var(--bg2);border:1px solid #e11d48;border-radius:99px;
+  padding:4px 8px;text-align:center;white-space:nowrap;opacity:.95}
 
 /* ---------- split layout ---------- */
 .split{display:grid;grid-template-columns:1fr;gap:22px}

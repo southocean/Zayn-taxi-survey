@@ -29,6 +29,24 @@ const FARE = {
 const ROAD_FACTOR = 1.35;
 const MIN_MINUTES = 15;
 
+/* Approximate trängselskatt cordon — the congestion-charge ring around
+   the inner city. Traced from the toll station positions (Norrtull,
+   Roslagstull, Ropsten, Danvikstull, Skanstull, Liljeholmsbron,
+   Essingeleden, Karlberg) and the shoreline between them.
+
+   For orientation only, not a legal boundary. What matters is the
+   rule it illustrates: driving entirely inside is free, driving
+   entirely outside is free, and only CROSSING the line costs money
+   (weekdays 06:30-18:29, up to 45 kr a passage, passed on to you).
+   Every route in this kit stays on one side of it. */
+const CORDON = [
+  [59.3520,18.0400],[59.3490,18.0580],[59.3530,18.0760],[59.3560,18.0900],
+  [59.3585,18.1020],[59.3500,18.1120],[59.3300,18.1290],[59.3220,18.1330],
+  [59.3200,18.1100],[59.3160,18.0990],[59.3110,18.0980],[59.3050,18.0800],
+  [59.3040,18.0640],[59.3060,18.0530],[59.3125,18.0270],[59.3200,18.0180],
+  [59.3300,17.9930],[59.3420,18.0020],[59.3450,18.0180]
+];
+
 const pt = (name, lat, lng, hint) => ({ name, lat, lng, hint });
 
 /* ================= SOUTH ================= */
