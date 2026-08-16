@@ -8,8 +8,8 @@
 const SCRIPT_PRE = [
   { id:"pr-open", tag:"SAY THIS FIRST", title:"At the window — 15 seconds, before you get in",
     tone:"Friendly, quick, slightly apologetic for holding them up. Stand at the open door. Do NOT sit down yet.",
-    en:"Hej! Quick thing before we go — I'm doing a paid research project about drivers here in Stockholm. If you're happy to answer some questions during the ride, I'll add a 100 kr tip in the app as a thank you. Is that okay?",
-    sv:"Hej! En snabb grej innan vi åker — jag gör ett betalt researchprojekt om förare här i Stockholm. Om du vill svara på några frågor under resan lägger jag till 100 kr i dricks i appen som tack. Är det okej?",
+    en:"Hej, I'm {name}! Quick thing before we go — I'm doing a paid research project about drivers here in Stockholm. If you're happy to answer some questions during the ride, I'll add a 100 kr tip in the app as a thank you. Is that okay?",
+    sv:"Hej, jag heter {name}! En snabb grej innan vi åker — jag gör ett betalt researchprojekt om förare här i Stockholm. Om du vill svara på några frågor under resan lägger jag till 100 kr i dricks i appen som tack. Är det okej?",
     why:"Ask and reward land in one breath, so there's nothing to weigh up. \"Is that okay?\" is a small yes, not a commitment. Standing outside means a no costs you ten seconds instead of a whole ride." },
 
   { id:"pr-yes", tag:"IF YES", title:"They say yes",

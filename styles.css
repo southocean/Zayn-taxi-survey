@@ -90,15 +90,34 @@ input:focus{outline:2px solid var(--acc);outline-offset:-1px}
 .tick input:checked + span::after{content:"";position:absolute;left:6px;top:2px;width:5px;height:10px;
   border:solid var(--on-acc);border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
 
-/* ---------- emergency ---------- */
-.sos{margin-bottom:24px}
-.soscall{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--on-acc);
-  background:var(--acc);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
-.soscall.empty{background:var(--card);color:var(--tx);border:1px dashed var(--line)}
-.sosic{font-size:22px;line-height:1}
-.soscall b{display:block;font-size:15px}
-.sosnum{display:block;font-size:13px;opacity:.85}
-.sosalt{font-size:12.5px;color:var(--mut);margin-top:8px;padding-left:2px}
+/* ---------- floating call button ---------- */
+.fab{
+  position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:1500;
+  width:56px;height:56px;border-radius:99px;display:grid;place-items:center;
+  background:var(--ok);color:#fff;text-decoration:none;
+  box-shadow:0 4px 16px rgba(0,0,0,.28);
+}
+.fab .ic{font-size:24px;line-height:1;position:relative;z-index:2}
+.fab .ring{
+  position:absolute;inset:0;border-radius:99px;background:var(--ok);
+  animation:pulse 2.4s cubic-bezier(.24,.6,.35,1) infinite;
+}
+.fab.off{background:var(--card2);color:var(--dim);border:1px solid var(--line)}
+.fab.off .ring{display:none}
+@keyframes pulse{
+  0%   {transform:scale(1);   opacity:.55}
+  70%  {transform:scale(1.85);opacity:0}
+  100% {transform:scale(1.85);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){ .fab .ring{animation:none;opacity:0} }
+
+.fabtip{
+  position:fixed;right:80px;bottom:calc(env(safe-area-inset-bottom) + 33px);z-index:1500;
+  background:var(--tx);color:var(--bg);font:650 12.5px/1 inherit;padding:9px 13px;
+  border-radius:99px;white-space:nowrap;opacity:0;transform:translateX(8px);
+  transition:.25s;pointer-events:none;box-shadow:0 3px 12px rgba(0,0,0,.22);
+}
+.fabtip.on{opacity:1;transform:translateX(0)}
 
 /* ---------- route picker ---------- */
 .routepick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
@@ -115,9 +134,12 @@ input:focus{outline:2px solid var(--acc);outline-offset:-1px}
 .routeinfo .cordon.ok{background:color-mix(in srgb,var(--ok) 12%,transparent);color:var(--tx)}
 .routeinfo .cordon.bad{background:var(--warn-soft);color:var(--warn)}
 .routeinfo .cordon b{color:inherit}
-.cordonlbl{font:700 9.5px/1 -apple-system,sans-serif;letter-spacing:.09em;text-transform:uppercase;
-  color:#e11d48;background:var(--bg2);border:1px solid #e11d48;border-radius:99px;
-  padding:4px 8px;text-align:center;white-space:nowrap;opacity:.95}
+/* Wrapper centres the pill so it can size to its own text instead of
+   being stretched to the icon box and clipped. */
+.cordonwrap{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
+.cordonlbl{display:inline-block;font:700 9.5px/1 -apple-system,sans-serif;letter-spacing:.07em;
+  text-transform:uppercase;color:#e11d48;background:var(--bg2);border:1px solid #e11d48;
+  border-radius:99px;padding:4px 9px;white-space:nowrap;opacity:.95}
 
 /* ---------- split layout ---------- */
 .split{display:grid;grid-template-columns:1fr;gap:22px}

@@ -82,30 +82,33 @@ function applyTheme(){
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if (S.theme === null) applyTheme(); });
 
 /* ================= EMERGENCY CONTACT =================
-   Reachable from anywhere: the ✆ in the sticky header and the card
-   at the top of the page, both fed from Setup. */
+   A floating call button, present on every tab. One tap dials the
+   coordinator — that's the whole point, so no confirm step. */
 function renderSos(){
-  const { coName, coTel, bkName, bkTel } = S.cfg;
-
-  const call = $('#hdrCall');
-  if (coTel){ call.href = 'tel:' + coTel.replace(/\s/g,''); call.classList.remove('off');
-              call.title = 'Call ' + (coName || 'coordinator'); }
-  else { call.href = '#s-setup'; call.classList.add('off'); call.title = 'Add a number in Setup'; }
+  const { coName, coTel } = S.cfg;
+  const fab = $('#fab'), tip = $('#fabTip');
   $('#hdrForm').href = FORMS[S.lang] || FORMS.en;
 
-  $('#sosBox').innerHTML = coTel
-    ? `<a class="soscall" href="tel:${esc(coTel.replace(/\s/g,''))}">
-         <span class="sosic">✆</span>
-         <span><b>Call ${esc(coName || 'coordinator')}</b><span class="sosnum">${esc(coTel)}</span></span>
-       </a>
-       ${bkTel ? `<div class="sosalt">Account or login trouble: <b>${esc(bkName || 'backup')}</b> —
-          ${/@/.test(bkTel) ? `<a href="mailto:${esc(bkTel)}">${esc(bkTel)}</a>`
-                            : `<a href="tel:${esc(bkTel.replace(/\s/g,''))}">${esc(bkTel)}</a>`}</div>` : ''}
-       <div class="sosalt">If a driver pushes back on cancelling: <b>take the ride, pay, then call.</b> Never argue.</div>`
-    : `<a class="soscall empty" href="#s-setup">
-         <span class="sosic">✆</span>
-         <span><b>Add your coordinator's number</b><span class="sosnum">Setup, at the bottom — one paste and it becomes a call button</span></span>
-       </a>`;
+  if (coTel){
+    fab.href = 'tel:' + coTel.replace(/\s/g,'');
+    fab.classList.remove('off');
+    fab.title = fab.ariaLabel = `Call ${coName || 'coordinator'} — ${coTel}`;
+    tip.textContent = `Call ${coName || 'coordinator'}`;
+    fab.onclick = null;
+  } else {
+    fab.href = '#'; fab.classList.add('off');
+    fab.title = fab.ariaLabel = 'Add a coordinator number in Setup';
+    tip.textContent = 'Add a number in Setup';
+    fab.onclick = e => { e.preventDefault(); showTab('setup'); };
+  }
+
+  /* Name the number on first sight, then get out of the way. */
+  if (!renderSos._shown){
+    renderSos._shown = true;
+    tip.hidden = false;
+    setTimeout(() => tip.classList.add('on'), 400);
+    setTimeout(() => tip.classList.remove('on'), 4200);
+  }
 }
 
 /* ================= ROUTE PICKER ================= */
@@ -210,8 +213,10 @@ function focusLeg(n){
   initMap();
   const lg = route().legs.find(l => l.n === n);
   highlight = n; drawRoute();
-  map.fitBounds(L.latLngBounds([[lg.from.lat, lg.from.lng], [lg.to.lat, lg.to.lng]]).pad(0.35));
-  $('#s-map').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  map.flyToBounds(L.latLngBounds([[lg.from.lat, lg.from.lng], [lg.to.lat, lg.to.lng]]).pad(0.35),
+                  { duration:.6 });
+  $('#map').scrollIntoView({ behavior:'smooth', block:'nearest' });
+  toast(`Leg ${n} pinned on the map`);
 }
 
 /* ================= MAP ================= */
@@ -226,7 +231,8 @@ function swapBasemap(dark){ if (tiles) tiles.setUrl(TILE(dark)); }
 function initMap(){
   if (map) { map.invalidateSize(); return; }
   map = L.map('map', { zoomControl:false }).setView([59.32, 18.05], 12);
-  L.control.zoom({ position:'bottomright' }).addTo(map);
+  /* bottom-LEFT: the floating call button owns the bottom-right corner */
+  L.control.zoom({ position:'bottomleft' }).addTo(map);
   tiles = L.tileLayer(TILE(isDark()), { attribution:'© OpenStreetMap, © CARTO', maxZoom:19 }).addTo(map);
   cordonLayer = L.layerGroup().addTo(map);
   legLayer = L.layerGroup().addTo(map);
@@ -252,8 +258,8 @@ function drawCordon(){
      so it never sits on top of a leg line. */
   L.marker([CORDON[0][0], CORDON[0][1]], {
     interactive:false,
-    icon: L.divIcon({ className:'', iconSize:[128,16], iconAnchor:[64,8],
-      html:`<div class="cordonlbl">congestion cordon</div>` })
+    icon: L.divIcon({ className:'', iconSize:[200,22], iconAnchor:[100,11],
+      html:`<div class="cordonwrap"><span class="cordonlbl">congestion cordon</span></div>` })
   }).addTo(cordonLayer);
 }
 
@@ -333,13 +339,14 @@ function drawRoute(){
     .addTo(legLayer).bindPopup(`<b>Finish</b><br>${finish.name}`);
 }
 
-function fitAll(){
+function fitAll(animate){
   if (!map) return;
   const pts = route().legs.flatMap(L2 => [[L2.from.lat, L2.from.lng], [L2.to.lat, L2.to.lng]]);
   /* Include the ring when it's on — otherwise the central route fills
      the screen and you can't see that it stays inside. */
   if (S.cordon) pts.push(...CORDON);
-  map.fitBounds(L.latLngBounds(pts).pad(0.08));
+  const b = L.latLngBounds(pts).pad(0.08);
+  animate ? map.flyToBounds(b, { duration:.6 }) : map.fitBounds(b);
 }
 
 function renderLegend(){
@@ -385,8 +392,12 @@ function startTracking(){
 }
 
 /* ================= SCRIPT ================= */
+/* Scripts carry {name} tokens filled from Setup, so changing your name
+   there updates every line immediately. */
+const fill = t => (t || '').replace(/\{name\}/g, S.cfg.name.trim() || '[your name]');
+
 function cardHTML(c, movable, group, i, len){
-  const body = (S.lang === 'sv' ? c.sv : c.en) || c.en;
+  const body = fill((S.lang === 'sv' ? c.sv : c.en) || c.en);
   return `
 <div class="sc">
   <div class="sc-top">
@@ -521,7 +532,8 @@ function saveCfg(){
   S.cfg = { coName:$('#cfgCoName').value.trim(), coTel:$('#cfgCoTel').value.trim(),
             bkName:$('#cfgBkName').value.trim(), bkTel:$('#cfgBkTel').value.trim(),
             name:$('#cfgName').value.trim() };
-  save(); renderSos(); toast('Saved to this phone');
+  save(); renderSos(); renderScripts();   // the script uses {name} live
+  toast('Saved to this phone');
 }
 function exportAll(){
   const b = new Blob([JSON.stringify(S, null, 2)], { type:'application/json' });
@@ -569,7 +581,15 @@ function boot(){
     save(); applyTheme(); drawRoute();
   };
   $('#btnLocate').onclick = startTracking;
-  $('#btnFitAll').onclick = () => { initMap(); highlight = null; drawRoute(); fitAll(); };
+  /* Zooms back out to all 14 legs and drops any single-leg highlight.
+     Always confirms, because when you're already at that view the map
+     doesn't move and the button reads as broken. */
+  $('#btnFitAll').onclick = () => {
+    initMap();
+    const was = highlight;
+    highlight = null; drawRoute(); fitAll(true);
+    toast(was ? `Leg ${was} unpinned — showing all 14` : 'Showing all 14 legs');
+  };
   $('#btnBig').onclick = () => {
     document.body.classList.toggle('big');
     $('#btnBig').textContent = document.body.classList.contains('big') ? 'Normal text' : 'Bigger text';

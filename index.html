@@ -19,7 +19,6 @@
       <span class="pill lead" id="pillLeads">0 leads</span>
       <span class="pill money" id="pillMoney">0 kr</span>
       <a id="hdrForm" class="iconbtn go" title="Open the survey form" target="_blank" rel="noopener">▤</a>
-      <a id="hdrCall" class="iconbtn call" title="Call the coordinator">✆</a>
       <button id="btnTheme" class="iconbtn" title="Light / dark">◐</button>
     </div>
   </div>
@@ -38,8 +37,6 @@
 
 <!-- ===================== ROUTE: legs + map ===================== -->
 <section id="tab-run">
-  <div class="sos" id="sosBox"></div>
-
   <div class="routepick" id="routePick"></div>
   <div class="card pad routeinfo" id="routeInfo"></div>
 
@@ -53,7 +50,7 @@
       <h2 class="h">Map</h2>
       <div class="maptools">
         <button id="btnLocate" class="btn">Track me</button>
-        <button id="btnFitAll" class="btn ghost">Fit route</button>
+        <button id="btnFitAll" class="btn ghost">Whole route</button>
         <button id="btnCordon" class="btn ghost">Cordon</button>
       </div>
       <div id="map"></div>
@@ -123,6 +120,7 @@
       <label>Backup contact<input id="cfgBkTel" placeholder="phone or email"></label>
     </div>
     <label>Your first name<input id="cfgName" placeholder="used in the intro"></label>
+    <p class="muted small" style="margin-top:6px">Drops straight into the opening line of the script, in both languages.</p>
     <button id="btnSaveCfg" class="btn wide">Save</button>
   </div>
 
@@ -145,6 +143,10 @@
 </section>
 
 </main>
+
+<!-- always-there call button, every tab -->
+<a id="fab" class="fab"><span class="ring"></span><span class="ic">✆</span></a>
+<div id="fabTip" class="fabtip" hidden></div>
 
 <div id="toast"></div>
 
