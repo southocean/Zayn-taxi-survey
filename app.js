@@ -86,28 +86,33 @@ matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { if
    coordinator — that's the whole point, so no confirm step. */
 function renderSos(){
   const { coName, coTel } = S.cfg;
-  const fab = $('#fab'), tip = $('#fabTip');
+  const fab = $('#fab'), tip = $('#fabTip'), nameTag = $('#fabName');
   $('#hdrForm').href = FORMS[S.lang] || FORMS.en;
+  const who = coName || 'coordinator';
 
   if (coTel){
     fab.href = 'tel:' + coTel.replace(/\s/g,'');
     fab.classList.remove('off');
-    fab.title = fab.ariaLabel = `Call ${coName || 'coordinator'} — ${coTel}`;
-    tip.textContent = `Call ${coName || 'coordinator'}`;
+    fab.title = fab.ariaLabel = `Call ${who} — ${coTel}`;
+    tip.textContent = `Call ${who}`;
+    nameTag.textContent = who.split(' ')[0];
     fab.onclick = null;
   } else {
     fab.href = '#'; fab.classList.add('off');
     fab.title = fab.ariaLabel = 'Add a coordinator number in Setup';
     tip.textContent = 'Add a number in Setup';
+    nameTag.textContent = 'Setup';
     fab.onclick = e => { e.preventDefault(); showTab('setup'); };
   }
 
-  /* Name the number on first sight, then get out of the way. */
-  if (!renderSos._shown){
-    renderSos._shown = true;
+  /* Greet once with the full name, then hand over to the small
+     permanent label so you always know who the button dials. */
+  if (!renderSos._greeted){
+    renderSos._greeted = true;
     tip.hidden = false;
     setTimeout(() => tip.classList.add('on'), 400);
     setTimeout(() => tip.classList.remove('on'), 4200);
+    setTimeout(() => nameTag.classList.add('on'), 4600);
   }
 }
 
@@ -236,6 +241,7 @@ function initMap(){
   tiles = L.tileLayer(TILE(isDark()), { attribution:'© OpenStreetMap, © CARTO', maxZoom:19 }).addTo(map);
   cordonLayer = L.layerGroup().addTo(map);
   legLayer = L.layerGroup().addTo(map);
+  addFitCtl();
   drawCordon(); drawRoute(); fitAll();
 }
 
@@ -339,14 +345,54 @@ function drawRoute(){
     .addTo(legLayer).bindPopup(`<b>Finish</b><br>${finish.name}`);
 }
 
+/* Everything that should be on screen when you're "seeing the whole
+   route" — the legs, plus the cordon ring when it's showing. */
+function routeBounds(){
+  const pts = route().legs.flatMap(L2 => [[L2.from.lat, L2.from.lng], [L2.to.lat, L2.to.lng]]);
+  if (S.cordon) pts.push(...CORDON);
+  return L.latLngBounds(pts);
+}
 function fitAll(animate){
   if (!map) return;
-  const pts = route().legs.flatMap(L2 => [[L2.from.lat, L2.from.lng], [L2.to.lat, L2.to.lng]]);
-  /* Include the ring when it's on — otherwise the central route fills
-     the screen and you can't see that it stays inside. */
-  if (S.cordon) pts.push(...CORDON);
-  const b = L.latLngBounds(pts).pad(0.08);
+  const b = routeBounds().pad(0.08);
   animate ? map.flyToBounds(b, { duration:.6 }) : map.fitBounds(b);
+  updateFitCtl();
+}
+
+/* A floating "zoom back out" control, top-right of the map. It only
+   appears once you've zoomed in far enough that the whole route no
+   longer fits — otherwise it would be a button that does nothing. */
+let fitCtl;
+function addFitCtl(){
+  const Ctl = L.Control.extend({
+    options: { position:'topright' },
+    onAdd(){
+      const a = L.DomUtil.create('a', 'fitctl hide');
+      a.href = '#';
+      a.title = a.ariaLabel = 'Zoom out to the whole route';
+      a.innerHTML = `<svg viewBox="0 0 20 20" width="17" height="17" aria-hidden="true">
+        <path d="M3 7.5V3h4.5M16.5 7.5V3H12M3 12.5V17h4.5M16.5 12.5V17H12"
+              fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+      L.DomEvent.on(a, 'click', L.DomEvent.stop);
+      L.DomEvent.on(a, 'click', () => {
+        const was = highlight;
+        highlight = null; drawRoute(); fitAll(true);
+        toast(was ? `Leg ${was} unpinned — showing all 14` : 'Showing all 14 legs');
+      });
+      this._el = a;
+      return a;
+    }
+  });
+  fitCtl = new Ctl();
+  map.addControl(fitCtl);
+  /* resize matters: the map is in a hidden tab at boot, so its size
+     settles after the first fit and the bounds change underneath us. */
+  map.on('moveend zoomend resize', updateFitCtl);
+}
+function updateFitCtl(){
+  if (!fitCtl || !fitCtl._el) return;
+  fitCtl._el.classList.toggle('hide', map.getBounds().contains(routeBounds()));
 }
 
 function renderLegend(){
@@ -559,7 +605,10 @@ function showTab(name){
   $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
   TABS.forEach(t => $('#tab-' + t).hidden = t !== name);
   window.scrollTo({ top:0 });
-  if (name === 'run'){ initMap(); setTimeout(() => map.invalidateSize(), 60); }
+  if (name === 'run'){
+    initMap();
+    setTimeout(() => { map.invalidateSize(); fitAll(); }, 60);
+  }
 }
 
 /* ================= BOOT ================= */
@@ -572,7 +621,7 @@ function renderAll(){
 function boot(){
   $$('.tabs button').forEach(b => b.onclick = () => showTab(b.dataset.tab));
   $('#btnCordon').onclick = () => {
-    S.cordon = !S.cordon; save(); initMap(); drawCordon();
+    S.cordon = !S.cordon; save(); initMap(); drawCordon(); updateFitCtl();
     toast(S.cordon ? 'Cordon shown' : 'Cordon hidden');
   };
   $('#btnTheme').onclick = () => {
@@ -581,15 +630,6 @@ function boot(){
     save(); applyTheme(); drawRoute();
   };
   $('#btnLocate').onclick = startTracking;
-  /* Zooms back out to all 14 legs and drops any single-leg highlight.
-     Always confirms, because when you're already at that view the map
-     doesn't move and the button reads as broken. */
-  $('#btnFitAll').onclick = () => {
-    initMap();
-    const was = highlight;
-    highlight = null; drawRoute(); fitAll(true);
-    toast(was ? `Leg ${was} unpinned — showing all 14` : 'Showing all 14 legs');
-  };
   $('#btnBig').onclick = () => {
     document.body.classList.toggle('big');
     $('#btnBig').textContent = document.body.classList.contains('big') ? 'Normal text' : 'Bigger text';

@@ -50,7 +50,6 @@
       <h2 class="h">Map</h2>
       <div class="maptools">
         <button id="btnLocate" class="btn">Track me</button>
-        <button id="btnFitAll" class="btn ghost">Whole route</button>
         <button id="btnCordon" class="btn ghost">Cordon</button>
       </div>
       <div id="map"></div>
@@ -145,7 +144,10 @@
 </main>
 
 <!-- always-there call button, every tab -->
-<a id="fab" class="fab"><span class="ring"></span><span class="ic">✆</span></a>
+<div class="fabwrap">
+  <a id="fab" class="fab"><span class="ring"></span><span class="ic">✆</span></a>
+  <span id="fabName" class="fabname"></span>
+</div>
 <div id="fabTip" class="fabtip" hidden></div>
 
 <div id="toast"></div>

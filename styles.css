@@ -91,13 +91,16 @@ input:focus{outline:2px solid var(--acc);outline-offset:-1px}
   border:solid var(--on-acc);border-width:0 2.5px 2.5px 0;transform:rotate(42deg)}
 
 /* ---------- floating call button ---------- */
-.fab{
-  position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom) + 18px);z-index:1500;
-  width:56px;height:56px;border-radius:99px;display:grid;place-items:center;
-  background:var(--ok);color:#fff;text-decoration:none;
-  box-shadow:0 4px 16px rgba(0,0,0,.28);
+.fabwrap{
+  position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom) + 14px);z-index:1500;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
 }
-.fab .ic{font-size:24px;line-height:1;position:relative;z-index:2}
+.fab{
+  position:relative;width:56px;height:56px;border-radius:99px;display:grid;place-items:center;
+  background:var(--ok);color:#fff;text-decoration:none;box-shadow:0 4px 16px rgba(0,0,0,.28);
+}
+.fab .ic{font-size:30px;line-height:1;position:relative;z-index:2;
+  animation:ringwobble 3.4s ease-in-out infinite;transform-origin:50% 55%}
 .fab .ring{
   position:absolute;inset:0;border-radius:99px;background:var(--ok);
   animation:pulse 2.4s cubic-bezier(.24,.6,.35,1) infinite;
@@ -109,10 +112,32 @@ input:focus{outline:2px solid var(--acc);outline-offset:-1px}
   70%  {transform:scale(1.85);opacity:0}
   100% {transform:scale(1.85);opacity:0}
 }
-@media (prefers-reduced-motion:reduce){ .fab .ring{animation:none;opacity:0} }
+/* a handset shaking in its cradle — quiet most of the cycle */
+@keyframes ringwobble{
+  0%,58%,100%{transform:rotate(0)}
+  62%{transform:rotate(-15deg)} 66%{transform:rotate(13deg)}
+  70%{transform:rotate(-11deg)} 74%{transform:rotate(9deg)}
+  78%{transform:rotate(-6deg)}  82%{transform:rotate(4deg)}
+  86%{transform:rotate(0)}
+}
+@media (prefers-reduced-motion:reduce){
+  .fab .ring{animation:none;opacity:0}
+  .fab .ic{animation:none}
+}
+
+/* Permanent label — fades in once the greeting tooltip has gone, so
+   you always know who the button dials. Space is reserved from the
+   start so the button never jumps. */
+.fabname{
+  background:var(--bg2);border:1px solid var(--line);color:var(--tx);
+  font:700 10.5px/1 inherit;letter-spacing:.02em;padding:4px 9px;border-radius:99px;
+  white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.18);
+  opacity:0;transform:translateY(-3px);transition:opacity .35s, transform .35s;
+}
+.fabname.on{opacity:1;transform:translateY(0)}
 
 .fabtip{
-  position:fixed;right:80px;bottom:calc(env(safe-area-inset-bottom) + 33px);z-index:1500;
+  position:fixed;right:80px;bottom:calc(env(safe-area-inset-bottom) + 57px);z-index:1500;
   background:var(--tx);color:var(--bg);font:650 12.5px/1 inherit;padding:9px 13px;
   border-radius:99px;white-space:nowrap;opacity:0;transform:translateX(8px);
   transition:.25s;pointer-events:none;box-shadow:0 3px 12px rgba(0,0,0,.22);
@@ -184,6 +209,14 @@ input:focus{outline:2px solid var(--acc);outline-offset:-1px}
 #map{height:52vh;min-height:320px;border-radius:var(--r);border:1px solid var(--line);background:var(--card2)}
 .leaflet-container{background:var(--card2);font:inherit}
 .leaflet-popup-content-wrapper,.leaflet-popup-tip{background:var(--card);color:var(--tx)}
+/* floating "zoom out to whole route" — only rendered when it'd do something */
+.fitctl{display:grid;place-items:center;width:34px;height:34px;border-radius:9px;
+  background:var(--bg2);border:1px solid var(--line);color:var(--tx);
+  box-shadow:0 2px 8px rgba(0,0,0,.18);transition:opacity .2s, transform .2s}
+.fitctl:hover{background:var(--card2)}
+.fitctl.hide{opacity:0;transform:scale(.75);pointer-events:none}
+.leaflet-top.leaflet-right .leaflet-control{margin:10px 10px 0 0}
+
 .mapinfo{margin-top:9px;font-size:13px;color:var(--mut);text-align:center;min-height:18px}
 .mrk{width:24px;height:24px;border-radius:99px;display:grid;place-items:center;
   font:700 11px/1 -apple-system,sans-serif;color:#fff;border:2px solid var(--bg2);
