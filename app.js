@@ -213,7 +213,7 @@ function initMap(){
   if (map) { map.invalidateSize(); return; }
   map = L.map('map', { zoomControl:false }).setView([59.293, 18.02], 12);
   L.control.zoom({ position:'bottomright' }).addTo(map);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
     attribution:'© OpenStreetMap, © CARTO', maxZoom:19
   }).addTo(map);
   legLayer = L.layerGroup().addTo(map);
@@ -230,7 +230,7 @@ function pinIcon(txt, colour){
 
 function drawRoute(){
   legLayer.clearLayers();
-  const colour = lg => lg.co === 'Uber' ? '#7dd3fc' : lg.co === 'Bolt' ? '#86efac' : '#fcd34d';
+  const colour = lg => lg.co === 'Uber' ? '#0284c7' : lg.co === 'Bolt' ? '#16a34a' : '#d97706';
   const nx = nextLegN();
 
   LEGS.forEach(lg => {
@@ -243,7 +243,7 @@ function drawRoute(){
       .bindPopup(`<b>Leg ${lg.n} · ${lg.co}</b><br>${lg.pickup.name} → ${lg.drop.name}`);
 
     L.marker([lg.pickup.lat, lg.pickup.lng], {
-      icon: pinIcon(done ? '✓' : lg.n, done ? '#4ade80' : c)
+      icon: pinIcon(done ? '✓' : lg.n, done ? '#94a3b8' : c)
     }).addTo(legLayer)
       .bindPopup(`<b>Leg ${lg.n} pickup</b><br>${lg.pickup.name}<br><small>${lg.pickup.hint}</small>`);
 
@@ -254,7 +254,7 @@ function drawRoute(){
   });
 
   const last = LEGS[LEGS.length - 1].drop;
-  L.marker([last.lat, last.lng], { icon: pinIcon('★', '#5eead4') })
+  L.marker([last.lat, last.lng], { icon: pinIcon('★', '#0d9488') })
     .addTo(legLayer).bindPopup(`<b>Finish</b><br>${last.name}`);
 }
 
@@ -282,9 +282,9 @@ function startTracking(){
     const { latitude:lat, longitude:lng, accuracy } = pos.coords;
     if (!meMarker){
       meMarker = L.circleMarker([lat, lng], {
-        radius:7, color:'#0f1115', weight:2, fillColor:'#5eead4', fillOpacity:1
+        radius:7, color:'#ffffff', weight:2.5, fillColor:'#0d9488', fillOpacity:1
       }).addTo(map);
-      meCircle = L.circle([lat, lng], { radius:accuracy, color:'#5eead4', weight:1, fillOpacity:.06 }).addTo(map);
+      meCircle = L.circle([lat, lng], { radius:accuracy, color:'#0d9488', weight:1, fillOpacity:.08 }).addTo(map);
       map.setView([lat, lng], 14);
     } else {
       meMarker.setLatLng([lat, lng]);

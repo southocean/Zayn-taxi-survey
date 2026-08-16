@@ -26,7 +26,7 @@ Use **Log → Export** before wiping browser data.
 |---|---|
 | `data.js` | pickup points, the 14 legs, all script text, briefing notes, fare models |
 | `app.js` | state, rendering, map, geolocation, log |
-| `styles.css` | dark mobile-first styling |
+| `styles.css` | light, mobile-first styling |
 | `index.html` | shell |
 
 Distances are `haversine × 1.35`; fares come from a rough linear model. Both are there to warn you early — the app's own quote is always the truth.
