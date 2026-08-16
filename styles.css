@@ -42,13 +42,18 @@ header{position:sticky;top:0;z-index:900;background:var(--bg2);border-bottom:1px
   padding:calc(env(safe-area-inset-top) + 8px) 12px 0}
 .hdr-row{display:flex;align-items:center;justify-content:space-between;gap:8px;max-width:1180px;margin:0 auto}
 h1{font-size:16px}
+/* One row of chips: every item is the same 26px box, vertically
+   centred, so pills and icon buttons share a baseline. */
 .counters{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
-.pill{font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:99px;background:var(--card2);color:var(--mut)}
-.pill.lead{color:var(--on-acc);background:var(--acc)}
+.counters > *{height:26px;box-sizing:border-box}
+.pill{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;line-height:1;
+  padding:0 10px;border-radius:99px;background:var(--card2);color:var(--mut)}
+/* not ".lead" — that's the leads-list card, whose margin leaked in here */
+.pill.pill-lead{color:var(--on-acc);background:var(--acc)}
 .pill.money{color:var(--gold);background:var(--gold-soft)}
 .iconbtn{display:inline-grid;place-items:center;background:var(--card2);border:1px solid var(--line);
-  color:var(--tx);border-radius:8px;width:28px;height:26px;font-size:13px;cursor:pointer;
-  line-height:1;text-decoration:none}
+  color:var(--tx);border-radius:99px;width:26px;height:26px;padding:0;font-size:12.5px;
+  line-height:1;cursor:pointer;text-decoration:none;font-family:inherit}
 .iconbtn.go{background:var(--acc);border-color:var(--acc);color:var(--on-acc)}
 .iconbtn.call{background:var(--ok);border-color:var(--ok);color:#fff}
 .iconbtn.call.off{background:var(--card2);border-color:var(--line);color:var(--dim)}
