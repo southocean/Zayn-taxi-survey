@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1115">
+<title>Field Kit</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚕</text></svg>">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header id="top">
+  <div class="hdr-row">
+    <h1>Field Kit</h1>
+    <div class="counters">
+      <span class="pill" id="pillDone">0/14</span>
+      <span class="pill lead" id="pillLeads">0 leads</span>
+      <span class="pill money" id="pillMoney">0 kr</span>
+    </div>
+  </div>
+  <div class="bar"><i id="barFill"></i></div>
+  <nav class="tabs">
+    <button data-tab="run"   class="on">Run</button>
+    <button data-tab="map">Map</button>
+    <button data-tab="say">Script</button>
+    <button data-tab="notes">Notes</button>
+    <button data-tab="log">Log</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ============ RUN ============ -->
+<section id="tab-run">
+  <div class="nextup" id="nextUp"></div>
+  <div class="legend">
+    <span><i class="dot uber"></i>Uber</span>
+    <span><i class="dot bolt"></i>Bolt</span>
+    <span><i class="dot trad"></i>Traditional</span>
+  </div>
+  <div id="legList"></div>
+  <p class="foot">Distances and fares are estimates from coordinates — <b>the app's quote is the truth</b>. Check it before you confirm.</p>
+</section>
+
+<!-- ============ MAP ============ -->
+<section id="tab-map" hidden>
+  <div class="maptools">
+    <button id="btnLocate" class="btn">Track me</button>
+    <button id="btnFitNext" class="btn ghost">Show next leg</button>
+    <button id="btnFitAll" class="btn ghost">Show all</button>
+  </div>
+  <div id="map"></div>
+  <div id="mapInfo" class="mapinfo"></div>
+</section>
+
+<!-- ============ SCRIPT ============ -->
+<section id="tab-say" hidden>
+  <div class="scriptctl">
+    <button id="btnBig" class="btn ghost">Bigger text</button>
+    <span class="hint">Hold the phone low. Read it once in the morning, then glance only.</span>
+  </div>
+
+  <h2 class="blockhead fixed">Before the ride <small>fixed order — this is the sensitive bit</small></h2>
+  <div id="scPre" class="cards"></div>
+
+  <h2 class="blockhead">In the cab <small>reorder with ↑ ↓</small></h2>
+  <div id="scCab" class="cards"></div>
+
+  <h2 class="blockhead">Closing &amp; the contact ask <small>reorder with ↑ ↓</small></h2>
+  <div id="scClose" class="cards"></div>
+
+  <button id="btnResetOrder" class="btn ghost wide">Reset card order</button>
+</section>
+
+<!-- ============ NOTES ============ -->
+<section id="tab-notes" hidden>
+  <div id="noteList"></div>
+</section>
+
+<!-- ============ LOG ============ -->
+<section id="tab-log" hidden>
+  <div class="card pad">
+    <h3>Setup</h3>
+    <p class="muted small">Stored only on this phone. Nothing here is in the repo.</p>
+    <label>Survey link — Swedish<input id="cfgSv" type="url" placeholder="paste link"></label>
+    <label>Survey link — English<input id="cfgEn" type="url" placeholder="paste link"></label>
+    <label>Coordinator phone<input id="cfgTel" type="tel" placeholder="0xx xxx xxxx"></label>
+    <label>Your name (for the intro)<input id="cfgName" type="text" placeholder="first name"></label>
+    <button id="btnSaveCfg" class="btn wide">Save</button>
+  </div>
+
+  <div class="card pad">
+    <h3>Leads collected</h3>
+    <div id="leadTable"></div>
+    <button id="btnCopyLeads" class="btn wide">Copy leads for the email</button>
+  </div>
+
+  <div class="card pad">
+    <h3>Backup</h3>
+    <button id="btnExport" class="btn ghost wide">Export everything (JSON)</button>
+    <label class="filelbl">Import a backup<input id="fileImport" type="file" accept="application/json"></label>
+    <button id="btnWipe" class="btn danger wide">Erase all my data</button>
+  </div>
+</section>
+
+</main>
+
+<div id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
