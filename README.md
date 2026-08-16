@@ -1,39 +1,57 @@
 # Field Kit
 
-A small phone-first web app for running a two-day, 14-ride driver interview round in Stockholm.
+A phone-first, single-page web app for running a two-day, 14-ride driver interview round in Stockholm.
 
 **Live:** see the Pages URL in the repo's About section.
 
+## Design constraint
+
+Rides are chosen against a strict priority order:
+
+1. **Time in the car** — 15 minutes minimum. Everything bends around this.
+2. **Fare** — around 150 kr (300 kr on traditional companies). A bit over is fine.
+3. **Distance** — barely matters.
+
+Average traffic speed decides how far you must travel to buy 15 minutes, which is why the three route variants have such different leg lengths:
+
+| Route | Avg speed | Distance for ~15 min | Typical fare |
+|---|---|---|---|
+| Central | ~16 km/h | 4.5 km | ~133 kr |
+| South | ~23 km/h | 6.2 km | ~150 kr |
+| North | ~28 km/h | 7.2 km | ~165 kr |
+
+Each variant is a self-contained 14-leg chain — every drop-off is the next pickup — so you can start any of them from wherever you are, and switch mid-day if one area is surging.
+
 ## What's in it
 
-- **Run** — the 14 legs as a chain (each pickup is the previous drop-off), with distance/time/fare estimates, two converging backups per leg, and per-leg capture of fare, driver name, phone and notes.
-- **Map** — Leaflet map of the whole chain, live GPS tracking, distance to the next pickup.
-- **Script** — pre-ride, in-cab and closing scripts as separate cards. The in-cab and closing blocks can be reordered; the pre-ride block is fixed.
-- **Notes** — briefing on rush hours, the congestion-charge cordon, surge traps, and the decision order when a quote comes back out of band.
-- **Log** — leads table with a one-tap copy for the write-up email, plus JSON export/import.
+- **Route picker** — south / central / north, with per-route progress.
+- **Legs + map** — side by side on desktop, list first on mobile. Tick a leg off, copy pickup or drop-off text for the cab apps, open the leg in Google Maps, log the fare. Live GPS tracking with distance to the next pickup.
+- **Script** — pre-ride, in-cab and closing, in English and Swedish. In-cab and closing cards can be reordered.
+- **Notes** — briefing on timing, the congestion cordon, surge traps, plus the client's do's and don'ts, all with read-tick boxes.
+- **Question guide** — what each of the 28 survey questions is actually digging for, and how to get more than the form asks.
+- **Leads** — a blank lead is always waiting; filling the last one spawns another. Collapsible, with a one-tap copy for the write-up email.
 
 ## Privacy
 
-The repo is public so GitHub Pages can serve it, so **it contains no client, company or personal information**.
+The repo is public so GitHub Pages can serve it, so **it contains no personal data**. Phone numbers, names and every driver contact you record are entered on your device and live in `localStorage` only. There is no backend and nothing is transmitted.
 
-Survey links, the coordinator's phone number and your name are entered once on your phone in **Log → Setup** and live in `localStorage` only. Same for every driver contact you record. Nothing is ever sent anywhere — there is no backend.
+The two survey form links are the client's "anyone with the link" Microsoft Forms and are included so the form is one tap away.
 
-Use **Log → Export** before wiping browser data.
+Use **Setup → Export** before clearing browser data.
 
 ## Files
 
 | file | what |
 |---|---|
-| `data.js` | pickup points, the 14 legs, all script text, briefing notes, fare models |
-| `app.js` | state, rendering, map, geolocation, log |
-| `styles.css` | light, mobile-first styling |
+| `routes.js` | fare models, stop coordinates, the three 14-leg chains |
+| `content.js` | scripts (EN/SV), briefing notes, do's and don'ts, question guide |
+| `app.js` | state, rendering, map, geolocation, leads |
+| `styles.css` | light and dark themes, mobile-first |
 | `index.html` | shell |
 
-Distances are `haversine × 1.35`; fares come from a rough linear model. Both are there to warn you early — the app's own quote is always the truth.
+Distances are `haversine × 1.35`; times are distance over the route's average speed; fares come from a linear model calibrated against the *jämförpris* traditional operators must display. All three are early warnings only — the app's own quote is the truth.
 
 ## Running locally
-
-Any static server, e.g.
 
 ```bash
 npx serve .
