@@ -48,11 +48,16 @@
 <section id="tab-map" hidden>
   <div class="maptools">
     <button id="btnLocate" class="btn">Track me</button>
-    <button id="btnFitNext" class="btn ghost">Show next leg</button>
+    <button id="btnFitNext" class="btn ghost">Next leg</button>
     <button id="btnFitAll" class="btn ghost">Show all</button>
+    <button id="btnBackups" class="btn ghost">Backups</button>
   </div>
   <div id="map"></div>
   <div id="mapInfo" class="mapinfo"></div>
+  <div class="maplegend">
+    <p><b>Numbers are where a leg starts.</b> Leg 1's line ends at marker 2, leg 2's at marker 3, and so on — the arrow on each line points at the drop-off.</p>
+    <p><b>Two markers joined to a grey dot</b> means one place used twice: Bandhagen starts legs 2 and 8, Gröndal starts leg 9 and is also the finish. They're pulled apart so you can tell the lines apart — the grey dot is the actual spot.</p>
+  </div>
 </section>
 
 <!-- ============ SCRIPT ============ -->

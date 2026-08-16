@@ -207,7 +207,7 @@ function openForm(){
 /* ================================================================
    MAP
    ================================================================ */
-let map, meMarker, meCircle, watchId = null, legLayer;
+let map, meMarker, meCircle, watchId = null, legLayer, showBackups = false;
 
 function initMap(){
   if (map) { map.invalidateSize(); return; }
@@ -228,34 +228,106 @@ function pinIcon(txt, colour){
   });
 }
 
+const ptKey = p => p.lat.toFixed(4) + ',' + p.lng.toFixed(4);
+const legColour = lg => lg.co === 'Uber' ? '#0284c7' : lg.co === 'Bolt' ? '#16a34a' : '#d97706';
+
+/* An arrowhead partway along a leg, rotated to the direction of
+   travel. Without this you cannot tell which end of a line is the
+   pickup — especially where several lines meet at one point. */
+function arrowIcon(deg, colour, big){
+  const s = big ? 20 : 15;
+  return L.divIcon({
+    className: '', iconSize: [s, s], iconAnchor: [s/2, s/2],
+    html: `<svg width="${s}" height="${s}" viewBox="0 0 18 18" style="transform:rotate(${deg}deg)">
+             <path d="M3 3.5 L14.5 9 L3 14.5 Z" fill="${colour}" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/>
+           </svg>`
+  });
+}
+
+/* Several legs can start at the same place (Bandhagen serves legs 2
+   and 8; Gröndal is both leg 9's pickup and the finish). Stacked
+   markers hide each other, so fan them out around the true point and
+   run the leg lines to the fanned positions. */
+function fanOut(specs){
+  const pos = {}, groups = {};
+  specs.forEach(s => (groups[ptKey(s.pt)] ||= []).push(s));
+
+  Object.values(groups).forEach(arr => {
+    if (arr.length === 1){ pos[arr[0].id] = [arr[0].pt.lat, arr[0].pt.lng]; return; }
+
+    const r = 0.19;                                  // km from the true point
+    arr.forEach((s, i) => {
+      const a = (i * 360 / arr.length - 90) * Math.PI / 180;
+      pos[s.id] = [
+        s.pt.lat + (r * Math.sin(a)) / 111.2,
+        s.pt.lng + (r * Math.cos(a)) / (111.32 * Math.cos(rad(s.pt.lat)))
+      ];
+    });
+
+    const home = [arr[0].pt.lat, arr[0].pt.lng];
+    const names = arr.map(s => s.label === '★' ? 'the finish' : 'leg ' + s.label);
+    arr.forEach(s => L.polyline([home, pos[s.id]], {
+      color: '#94a3b8', weight: 1.5, opacity: .8, dashArray: '2 4'
+    }).addTo(legLayer));
+    L.circleMarker(home, { radius: 4, color: '#fff', weight: 1.5, fillColor: '#64748b', fillOpacity: 1 })
+      .addTo(legLayer)
+      .bindPopup(`<b>${arr[0].pt.name}</b><br>One place, used twice — ${names.join(' and ')} both start here.<br>
+                  <small>The two markers are pulled apart so you can see which line is which; the real spot is this grey dot.</small>`);
+  });
+  return pos;
+}
+
 function drawRoute(){
   legLayer.clearLayers();
-  const colour = lg => lg.co === 'Uber' ? '#0284c7' : lg.co === 'Bolt' ? '#16a34a' : '#d97706';
   const nx = nextLegN();
 
+  const specs = LEGS.map(lg => ({ id: 'L' + lg.n, label: String(lg.n), pt: lg.pickup }));
+  const finish = LEGS[LEGS.length - 1].drop;
+  specs.push({ id: 'FIN', label: '★', pt: finish });
+  const pos   = fanOut(specs);
+  const endOf = lg => lg.n < LEGS.length ? pos['L' + (lg.n + 1)] : pos['FIN'];
+  const seen = {}, dupes = new Set();
   LEGS.forEach(lg => {
-    const done = leg(lg.n).done, isNext = lg.n === nx, c = colour(lg);
+    const k = ptKey(lg.pickup);
+    if (seen[k] !== undefined){ dupes.add(lg.n); dupes.add(seen[k]); } else seen[k] = lg.n;
+  });
 
-    L.polyline([[lg.pickup.lat, lg.pickup.lng], [lg.drop.lat, lg.drop.lng]], {
-      color: c, weight: isNext ? 5 : 3, opacity: done ? .22 : (isNext ? .95 : .55),
+  LEGS.forEach(lg => {
+    const done = leg(lg.n).done, isNext = lg.n === nx, c = legColour(lg);
+    const from = pos['L' + lg.n], to = endOf(lg);
+    const op   = done ? .25 : (isNext ? 1 : .6);
+
+    L.polyline([from, to], {
+      color: c, weight: isNext ? 5 : 3, opacity: op,
       dashArray: isNext ? null : '1 7', lineCap: 'round'
     }).addTo(legLayer)
       .bindPopup(`<b>Leg ${lg.n} · ${lg.co}</b><br>${lg.pickup.name} → ${lg.drop.name}`);
 
-    L.marker([lg.pickup.lat, lg.pickup.lng], {
-      icon: pinIcon(done ? '✓' : lg.n, done ? '#94a3b8' : c)
-    }).addTo(legLayer)
-      .bindPopup(`<b>Leg ${lg.n} pickup</b><br>${lg.pickup.name}<br><small>${lg.pickup.hint}</small>`);
+    // arrowhead at 62% along, pointing at the drop-off
+    const t  = 0.62;
+    const dx = (to[1] - from[1]) * Math.cos(rad(from[0])), dy = to[0] - from[0];
+    L.marker([from[0] + dy * t, from[1] + (to[1] - from[1]) * t], {
+      icon: arrowIcon(Math.atan2(-dy, dx) * 180 / Math.PI, c, isNext),
+      opacity: op, interactive: false
+    }).addTo(legLayer);
 
-    L.circleMarker([lg.altPickup.lat, lg.altPickup.lng], {
-      radius: 4, color: c, weight: 1, fillOpacity: .35, opacity: .5
-    }).addTo(legLayer)
-      .bindPopup(`<b>Leg ${lg.n} backup pickup</b><br>${lg.altPickup.name}`);
+    L.marker(from, { icon: pinIcon(done ? '✓' : lg.n, done ? '#94a3b8' : c) })
+      .addTo(legLayer)
+      .bindPopup(`<b>Leg ${lg.n} starts here</b><br>${lg.pickup.name}<br>
+                  <small>${lg.pickup.hint}</small>
+                  ${dupes.has(lg.n) ? '<br><small><b>Shared point.</b> Another leg starts here too — the markers are fanned apart on purpose.</small>' : ''}
+                  <br>→ drops at <b>${lg.drop.name}</b>`);
+
+    if (showBackups || isNext){
+      L.circleMarker([lg.altPickup.lat, lg.altPickup.lng], {
+        radius: 4, color: c, weight: 1.5, fillColor: '#fff', fillOpacity: 1, opacity: .8
+      }).addTo(legLayer)
+        .bindPopup(`<b>Leg ${lg.n} backup pickup (B1)</b><br>${lg.altPickup.name}`);
+    }
   });
 
-  const last = LEGS[LEGS.length - 1].drop;
-  L.marker([last.lat, last.lng], { icon: pinIcon('★', '#0d9488') })
-    .addTo(legLayer).bindPopup(`<b>Finish</b><br>${last.name}`);
+  L.marker(pos['FIN'], { icon: pinIcon('★', '#0d9488') })
+    .addTo(legLayer).bindPopup(`<b>Finish</b><br>${finish.name}`);
 }
 
 function fitAll(){
@@ -427,6 +499,11 @@ function boot(){
   $('#btnLocate').onclick  = startTracking;
   $('#btnFitAll').onclick  = () => { initMap(); fitAll(); };
   $('#btnFitNext').onclick = () => { initMap(); fitNext(); };
+  $('#btnBackups').onclick = () => {
+    showBackups = !showBackups; initMap(); drawRoute();
+    $('#btnBackups').classList.toggle('ghost', !showBackups);
+    toast(showBackups ? 'Showing every B1 backup' : 'Backups hidden except the next leg');
+  };
   $('#btnBig').onclick     = () => { document.body.classList.toggle('big');
                                      $('#btnBig').textContent = document.body.classList.contains('big') ? 'Normal text' : 'Bigger text'; };
   $('#btnResetOrder').onclick = () => { S.order = { cab:null, close:null }; save(); renderScripts(); toast('Order reset'); };

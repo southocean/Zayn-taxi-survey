@@ -129,6 +129,10 @@ textarea{min-height:60px;resize:vertical}
 #map{height:64vh;min-height:340px;border-radius:var(--r);border:1px solid var(--line);background:var(--card2)}
 .leaflet-container{background:#e9edf1;font:inherit}
 .mapinfo{margin-top:10px;font-size:13px;color:var(--mut);text-align:center;min-height:20px}
+.maplegend{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+  padding:12px 13px;font-size:12.5px;line-height:1.6;color:var(--mut);box-shadow:var(--sh)}
+.maplegend p{margin:0 0 8px} .maplegend p:last-child{margin:0}
+.maplegend b{color:var(--tx)}
 .mrk{
   width:24px;height:24px;border-radius:99px;display:grid;place-items:center;
   font:700 11px/1 -apple-system,sans-serif;color:#fff;border:2px solid #fff;
